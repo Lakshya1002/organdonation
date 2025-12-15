@@ -1,0 +1,95 @@
+/* Container Styling */
+.donor-registration-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1F4959, #5C7C89); /* Gradient background */
+  padding: 2rem;
+}
+
+/* Form Styling */
+.donor-registration {
+  max-width: 600px;
+  width: 100%;
+  padding: 2.5rem;
+  background-color: #FFFFFF; /* White background */
+  border-radius: 15px;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.2); /* Strong shadow for depth */
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.donor-registration h2 {
+  font-size: 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  color: #242424; /* Dark text for contrast */
+  font-weight: 700; /* Bold heading */
+  letter-spacing: -0.5px; /* Slight letter spacing */
+}
+
+.donor-registration form {
+  display: flex;
+  flex-direction: column;
+}
+
+.donor-registration .form-group {
+  margin-bottom: 1.5rem;
+}
+
+.donor-registration label {
+  font-size: 1.1rem;
+  margin-bottom: 0.5rem;
+  color: #1F4959; /* Darker text for labels */
+  font-weight: 600; /* Semi-bold labels */
+}
+
+.donor-registration input,
+.donor-registration select {
+  padding: 1rem;
+  margin-bottom: 1rem;
+  border: 2px solid #5C7C89; /* Thicker border */
+  border-radius: 8px;
+  font-size: 1rem;
+  color: #242424; /* Dark text */
+  background-color: #F0F4F8; /* Light background for inputs */
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.donor-registration input:focus,
+.donor-registration select:focus {
+  border-color: #1F4959; /* Focus border color */
+  box-shadow: 0 0 12px rgba(31, 73, 89, 0.3); /* Stronger focus shadow */
+  outline: none;
+}
+
+.donor-registration button {
+  background-color: #1F4959; /* Dark button */
+  color: white;
+  border: none;
+  padding: 1.2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  border-radius: 8px;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 1rem;
+  font-weight: 600; /* Semi-bold button text */
+  letter-spacing: 0.5px; /* Slight letter spacing */
+}
+
+.donor-registration button:hover {
+  background-color: #5C7C89; /* Lighter on hover */
+  transform: translateY(-2px);
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

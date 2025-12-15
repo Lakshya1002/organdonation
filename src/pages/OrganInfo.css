@@ -1,0 +1,134 @@
+/* Container Styling */
+.organ-info {
+    padding: 6rem 2rem;
+    text-align: center;
+    background: linear-gradient(135deg, #1F4959, #5C7C89); /* Gradient background */
+    color: #FFFFFF; /* White text */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .organ-info h2 {
+    font-size: 3rem;
+    margin-bottom: 3rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.3);
+    color: white; /* Updated to make the text white */
+  }
+  
+  /* Grid Layout */
+  .organ-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    padding: 0 2rem;
+    max-width: 1200px;
+    width: 90%; /* Adjusted width to shift cards slightly left */
+    margin: 0 auto;
+  }
+  
+  /* Card Styling */
+  .organ-card {
+    perspective: 1000px; /* For 3D flip effect */
+    height: 280px; /* Reduced card height */
+    width: 100%;
+  }
+  
+  .organ-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transition: transform 0.8s;
+    transform-style: preserve-3d;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  .organ-card:hover .organ-card-inner {
+    transform: rotateY(180deg); /* Flip effect on hover */
+  }
+  
+  .organ-card-front,
+  .organ-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden; /* Hide the back side during flip */
+    border-radius: 15px;
+    padding: 1.5rem; /* Reduced padding */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  /* Front Card Styling */
+  .organ-card-front {
+    background: linear-gradient(135deg, #F0F4F8, #E0E7EC); /* Light gradient (different from background) */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .organ-card-front:hover {
+    transform: scale(1.02); /* Slight zoom on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* Back Card Styling */
+  .organ-card-back {
+    background: linear-gradient(135deg, #254E58, #3A6B7A); /* Dark gradient (different from background) */
+    color: #FFFFFF; /* White text */
+    transform: rotateY(180deg); /* Initially hidden */
+  }
+  
+  /* Icon Styling */
+  .organ-icon {
+    font-size: 2.5rem; /* Reduced icon size */
+    color: #1F4959; /* Dark blue for icons */
+    margin-bottom: 1rem;
+  }
+  
+  /* Text Styling */
+  .organ-card h3 {
+    font-size: 1.4rem; /* Reduced heading size */
+    margin-bottom: 0.5rem;
+    color: #242424; /* Dark text */
+  }
+  
+  .organ-card p {
+    font-size: 0.9rem; /* Reduced text size */
+    color: #5C7C89; /* Light blue for text */
+  }
+  
+  /* Back Side Text Styling */
+  .organ-card-back p {
+    font-size: 0.9rem; /* Reduced text size */
+    color: #FFFFFF; /* White text */
+    line-height: 1.6;
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .organ-info h2 {
+      font-size: 2.5rem;
+    }
+  
+    .organ-grid {
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .organ-info h2 {
+      font-size: 2rem;
+    }
+  
+    .organ-grid {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+  }

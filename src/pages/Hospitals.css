@@ -1,0 +1,112 @@
+/* Main Page Styling */
+.hospitals {
+  padding: 5rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #1F4959, #5C7C89);
+  color: #f9f9f9;
+  min-height: 100vh;
+}
+
+.hospitals h2 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+  color: white; /* Updated to make the text white */
+}
+
+.hospital-subtext {
+  font-size: 1.2rem;
+  margin-bottom: 3rem;
+  color: #d1e0e9;
+}
+
+/* Hospital List */
+.hospital-list {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+/* Hospital Item */
+.hospital-item {
+  display: flex;
+  align-items: center;
+  background: #ffffff;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  margin-bottom: 1.5rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hospital-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.3);
+}
+
+/* Hospital Icon */
+.hospital-icon {
+  font-size: 2.5rem;
+  color: #7a8386;
+  margin-right: 1.5rem;
+}
+
+/* Hospital Info */
+.hospital-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.hospital-name {
+  font-size: 1.5rem;
+  margin: 0;
+  color: #1F4959;
+}
+
+.hospital-location {
+  font-size: 1rem;
+  color: #5C7C89;
+  margin-top: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.location-icon {
+  margin-right: 5px;
+  color: #0077b6;
+  font-size: 1.1rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .hospitals h2 {
+    font-size: 2.5rem;
+  }
+
+  .hospital-list {
+    width: 90%;
+  }
+
+  .hospital-item {
+    flex-direction: column;
+    text-align: center;
+    padding: 1.2rem;
+  }
+
+  .hospital-icon {
+    margin-right: 0;
+    margin-bottom: 1rem;
+  }
+
+  .hospital-info {
+    align-items: center;
+  }
+
+  .hospital-location {
+    justify-content: center;
+  }
+}

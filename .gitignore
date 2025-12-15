@@ -1,0 +1,103 @@
+node_modules/
+dist/
+build/
+.env
+.env.local
+.env.*.local
+coverage/
+.DS_Store
+.vscode/
+.idea/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+/.cache
+/.parcel-cache
+logs/
+*.log
+*.local
+Thumbs.db
+# ==========================================
+# === NODE & REACT FULL-STACK IGNORE FILE ==
+# ==========================================
+
+# -------------------------
+# Dependencies
+# -------------------------
+node_modules/
+**/node_modules/
+
+# PnP
+.pnp
+.pnp.js
+
+# -------------------------
+# Environment / Secrets
+# -------------------------
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Backend env
+backend/.env
+backend/.env.local
+
+# Frontend env
+frontend/.env
+frontend/.env.local
+
+# -------------------------
+# Testing & Coverage
+# -------------------------
+coverage/
+**/coverage/
+
+# -------------------------
+# Build / Production output
+# -------------------------
+build/
+dist/
+frontend/build/
+backend/dist/
+
+# -------------------------
+# OS / System files
+# -------------------------
+.DS_Store
+Thumbs.db
+
+# -------------------------
+# Logs
+# -------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# -------------------------
+# Editors / IDE
+# -------------------------
+.vscode/
+.idea/
+*.swp
+
+# -------------------------
+# Cache / Temp
+# -------------------------
+.cache/
+*.cache
+temp/
+tmp/
+
+# -------------------------
+# Upload folders (if using)
+# -------------------------
+uploads/
+public/uploads/

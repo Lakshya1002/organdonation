@@ -1,0 +1,63 @@
+.matching {
+  max-width: 1000px;
+  margin: 50px auto;
+  text-align: center;
+  font-family: 'Poppins', sans-serif;
+  background: #ffffff;
+  padding: 30px;
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+  font-size: 2.5rem;
+  color: #1F4959;
+  margin-bottom: 10px;
+}
+
+.matching-description {
+  font-size: 1.2rem;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+}
+
+thead {
+  background-color: #1F4959;
+  color: #fff;
+}
+
+th, td {
+  padding: 15px;
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+}
+
+th {
+  font-size: 1.3rem;
+}
+
+tbody tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+
+.status {
+  padding: 8px 12px;
+  border-radius: 5px;
+  font-weight: bold;
+}
+
+.status.matched {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status.pending {
+  background-color: #ff9800;
+  color: white;
+}

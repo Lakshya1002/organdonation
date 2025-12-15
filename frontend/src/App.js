@@ -1,6 +1,7 @@
 // src/App.js
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Toaster } from 'react-hot-toast';
 
 import Login from "./pages/Login";
 import Unauthorized from "./pages/Unauthorized";
@@ -20,37 +21,28 @@ import MainLayout from "./layouts/MainLayout";
 export default function App() {
   return (
     <BrowserRouter>
+      {/* Toast Notification Provider */}
+      <Toaster position="top-right" reverseOrder={false} />
+      
       <Routes>
-
-        {/* Default Route */}
         <Route path="/" element={<Navigate to="/login" replace />} />
-
-        {/* Public Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/unauthorized" element={<Unauthorized />} />
 
-        {/* Private Routes */}
+        {/* Protected Routes */}
         <Route element={<ProtectedRoute allowedRoles={["admin", "coordinator", "doctor"]} />}>
           <Route element={<MainLayout />}>
-
-            {/* Admin Routes */}
             <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="/admin/donors" element={<Donors />} />
             <Route path="/admin/recipients" element={<Recipients />} />
             <Route path="/admin/organs" element={<Organs />} />
-
-            {/* Matching */}
+            
             <Route path="/matching" element={<Matching />} />
-
-            {/* Coordinator Routes */}
+            
             <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
-
-            {/* Doctor Routes */}
             <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-          
           </Route>
         </Route>
-
       </Routes>
     </BrowserRouter>
   );

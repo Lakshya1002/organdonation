@@ -1,124 +1,165 @@
+/**
+ * backend/routes/matching.js
+ * FIXED: Added Waiting Time logic, standardized Blood Logic, and simplified scoring.
+ */
 const express = require("express");
 const router = express.Router();
 const db = require('../db/db');
+const { authenticateToken } = require("../middleware/auth");
 
+// SCORING WEIGHTS
+const WEIGHTS = { 
+  BLOOD: 40,      // Critical: 40 points if compatible
+  URGENCY: 30,    // High urgency = more points
+  AGE: 20,        // Closer age = more points
+  WAITING: 10     // Longer wait = more points
+};
+
+/**
+ * Run Matching Algorithm
+ * POST /api/matches/run
+ * Body: { organ_id }
+ */
 async function runMatchingAlgorithm(req, res) {
   try {
-    // 1. Fetch available organs (with donor info) and waiting recipients
-    const [organs] = await db.query(`
-      SELECT o.*, d.name AS donor_name, d.blood_group AS donor_blood_group, d.age AS donor_age
+    const { organ_id } = req.body;
+    if(!organ_id) return res.status(400).json({ error: "Organ ID required" });
+
+    // 1. Fetch the Organ and its Donor details
+    const [[organ]] = await db.query(`
+      SELECT o.*, d.blood_group AS donor_blood, d.age AS donor_age 
       FROM Organs o
-      LEFT JOIN Donors d ON d.id = o.donor_id
-      WHERE o.status = 'AVAILABLE'
-    `);
+      JOIN Donors d ON o.donor_id = d.id
+      WHERE o.id = ? AND o.status = 'AVAILABLE'`, [organ_id]);
 
-    const [recipients] = await db.query(`SELECT * FROM Recipients WHERE status = 'WAITING'`);
+    if (!organ) return res.status(404).json({ error: "Organ not found or not available" });
 
-    let potentialMatches = [];
+    // 2. Fetch Waiting Recipients needing this organ type
+    const [recipients] = await db.query(
+      `SELECT * FROM Recipients WHERE status = 'WAITING' AND organ_needed = ?`, 
+      [organ.organ_type]
+    );
 
-    // Algorithm Weights
-    const WEIGHTS = { BLOOD: 40, URGENCY: 30, AGE: 20, WAITING_TIME: 10 };
+    let matches = [];
 
-    organs.forEach(org => {
-      recipients.forEach(recipient => {
-        // Basic hard filter: organ type must match recipient need
-        if ((org.organ_type || '').toString().toUpperCase() !== (recipient.organ_needed || '').toString().toUpperCase()) return;
+    recipients.forEach(recipient => {
+      // --- FILTER: Blood Compatibility ---
+      if (!checkBloodCompatibility(organ.donor_blood, recipient.blood_group)) return;
 
-        let score = 0;
-        let reasons = [];
+      let score = 0;
+      let breakdown = { blood: 0, urgency: 0, age: 0, waiting: 0 };
 
-        // A. Blood Compatibility Check (donor blood from organ join)
-        if (checkBloodCompatibility((org.donor_blood_group || '').toString().toUpperCase(), (recipient.blood_group || '').toString().toUpperCase())) {
-          score += WEIGHTS.BLOOD;
-          reasons.push('Blood Type Compatible');
-        } else {
-          return; // incompatible
-        }
+      // A. Blood Score (Pass = Full Points)
+      score += WEIGHTS.BLOOD;
+      breakdown.blood = WEIGHTS.BLOOD;
 
-        // B. Urgency: prefer pra_score if present, otherwise map severity_level
-        let urgency = 0;
-        if (recipient.pra_score !== null && recipient.pra_score !== undefined) {
-          urgency = Math.min(10, Math.round(Number(recipient.pra_score) / 10));
-        } else if (recipient.severity_level) {
-          const s = (recipient.severity_level || '').toString().toUpperCase();
-          if (s === 'HIGH') urgency = 9;
-          else if (s === 'MEDIUM') urgency = 6;
-          else if (s === 'LOW') urgency = 3;
-          else urgency = 5;
-        } else {
-          urgency = 5;
-        }
-        score += (urgency / 10) * WEIGHTS.URGENCY;
-        if (urgency >= 8) reasons.push('High Urgency Recipient');
+      // B. Urgency Score (Based on PRA Score or Severity)
+      // Normalize urgency to 0-1 range then multiply by weight
+      let urgencyFactor = 0.5; // default medium
+      if (recipient.pra_score !== null) {
+          urgencyFactor = Math.min(100, recipient.pra_score) / 100;
+      } else if (recipient.severity_level) {
+          const s = recipient.severity_level.toUpperCase();
+          if (s === 'HIGH') urgencyFactor = 0.9;
+          if (s === 'MEDIUM') urgencyFactor = 0.5;
+          if (s === 'LOW') urgencyFactor = 0.2;
+      }
+      const urgencyPoints = urgencyFactor * WEIGHTS.URGENCY;
+      score += urgencyPoints;
+      breakdown.urgency = Math.round(urgencyPoints);
 
-        // C. Age proximity between donor (from org.donor_age) and recipient
-        const donorAge = Number(org.donor_age || org.age || 0);
-        const recAge = Number(recipient.age || 0);
-        const ageDiff = Math.abs(donorAge - recAge);
-        if (ageDiff <= 10) score += WEIGHTS.AGE;
-        else if (ageDiff <= 20) score += WEIGHTS.AGE / 2;
+      // C. Age Proximity Score
+      // If age difference is small, higher score
+      const donorAge = organ.donor_age || 30;
+      const recipientAge = recipient.age || 30;
+      const ageDiff = Math.abs(donorAge - recipientAge);
+      
+      let agePoints = 0;
+      if (ageDiff <= 10) agePoints = WEIGHTS.AGE;       // <10 years diff: Full points
+      else if (ageDiff <= 20) agePoints = WEIGHTS.AGE * 0.5; // <20 years diff: Half points
+      // else 0 points
+      
+      score += agePoints;
+      breakdown.age = agePoints;
 
-        // Add to list if score is decent
-        if (score >= 50) {
-          potentialMatches.push({
-            organ: org,
-            recipient,
-            score: Math.round(score),
-            reasons
-          });
-        }
+      // D. Waiting Time Score
+      // 1 point per month waiting, max 10 points
+      let waitingPoints = 0;
+      if (recipient.waiting_since) {
+         const waitDate = new Date(recipient.waiting_since);
+         const now = new Date();
+         const diffTime = Math.abs(now - waitDate);
+         const diffMonths = Math.floor(diffTime / (1000 * 60 * 60 * 24 * 30)); 
+         waitingPoints = Math.min(WEIGHTS.WAITING, diffMonths);
+      }
+      score += waitingPoints;
+      breakdown.waiting = waitingPoints;
+
+      matches.push({
+        recipient_id: recipient.id,
+        recipient_name: recipient.name,
+        blood_group: recipient.blood_group,
+        total_score: Math.round(score),
+        scores: breakdown
       });
     });
 
-    // Sort matches by score (Highest first)
-    potentialMatches.sort((a, b) => b.score - a.score);
+    // Sort by highest score
+    matches.sort((a, b) => b.total_score - a.total_score);
 
-    res.json({ count: potentialMatches.length, matches: potentialMatches });
+    res.json({ organ, matches });
 
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Matching algorithm failed.' });
+    console.error("Matching Error:", err);
+    res.status(500).json({ error: 'Matching algorithm failed' });
   }
 }
 
-// Helper: Blood Type Compatibility Logic
+// Helper: Blood Compatibility
 function checkBloodCompatibility(donor, recipient) {
-    if (donor === 'O-') return true; // Universal Donor
-    if (recipient === 'AB+') return true; // Universal Recipient
-    if (donor === recipient) return true; // Exact match
+    const d = (donor || '').toUpperCase();
+    const r = (recipient || '').toUpperCase();
     
-    // Specific cases
-    if (donor === 'O+' && (recipient === 'O+' || recipient === 'A+' || recipient === 'B+' || recipient === 'AB+')) return true;
-    if (donor === 'A-' && (recipient === 'A-' || recipient === 'A+' || recipient === 'AB-' || recipient === 'AB+')) return true;
-    if (donor === 'A+' && (recipient === 'A+' || recipient === 'AB+')) return true;
-    // ... add other specific rules as needed
+    if (d === 'O-') return true; // Universal Donor
+    if (r === 'AB+') return true; // Universal Recipient
+    if (d === r) return true; // Exact match
+
+    // Specific compatibilities
+    if (d === 'O+' && ['A+', 'B+', 'AB+'].includes(r)) return true;
+    if (d === 'A-' && ['A+', 'AB+', 'AB-'].includes(r)) return true;
+    if (d === 'A+' && ['AB+'].includes(r)) return true;
+    if (d === 'B-' && ['B+', 'AB+', 'AB-'].includes(r)) return true;
+    if (d === 'B+' && ['AB+'].includes(r)) return true;
     
     return false; 
 }
 
-  // Expose route on the router so `require('./routes/matching')` returns a router
-  router.get('/run', runMatchingAlgorithm);
+// Register Routes
+router.post('/run', authenticateToken, runMatchingAlgorithm);
 
-  module.exports = router;
-
-  // Allocate an organ to a recipient (create a Match and mark organ ALLOCATED)
-  router.post('/allocate', async (req, res) => {
+// Allocate Route
+router.post('/allocate', authenticateToken, async (req, res) => {
     try {
-      const { organ_id, recipient_id, medical_score, non_medical_score, final_score } = req.body;
+      const { organ_id, recipient_id, final_score } = req.body;
       if (!organ_id || !recipient_id) return res.status(400).json({ error: 'organ_id and recipient_id required' });
 
-      // Create match
+      // 1. Create Match Record
       const [ins] = await db.query(
-        `INSERT INTO Matches (organ_id, recipient_id, medical_score, non_medical_score, final_score, status) VALUES (?, ?, ?, ?, ?, 'SELECTED')`,
-        [organ_id, recipient_id, medical_score || null, non_medical_score || null, final_score || null]
+        `INSERT INTO Matches (organ_id, recipient_id, final_score, status, generated_at) VALUES (?, ?, ?, 'SELECTED', NOW())`,
+        [organ_id, recipient_id, final_score || 0]
       );
 
-      // Mark organ as allocated
+      // 2. Mark Organ as ALLOCATED
       await db.query(`UPDATE Organs SET status = 'ALLOCATED', allocated_to_match_id = ? WHERE id = ?`, [ins.insertId, organ_id]);
 
-      return res.status(201).json({ message: 'Organ allocated', match_id: ins.insertId });
+      // 3. Mark Recipient as MATCHED
+      await db.query(`UPDATE Recipients SET status = 'MATCHED' WHERE id = ?`, [recipient_id]);
+
+      return res.status(201).json({ message: 'Organ allocated successfully', match_id: ins.insertId });
     } catch (err) {
       console.error('ALLOCATE error:', err);
       return res.status(500).json({ error: err.message });
     }
-  });
+});
+
+module.exports = router;

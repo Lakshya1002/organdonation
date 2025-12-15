@@ -2,31 +2,28 @@
 import React, { useEffect, useState } from "react";
 import axiosClient from "../api/axiosClient";
 import DataTable from "./DataTable";
+import toast from "react-hot-toast";
 
 export default function Organs() {
   const [organs, setOrgans] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-
-  // Modal state
   const [showModal, setShowModal] = useState(false);
   const [organData, setOrganData] = useState({
-    organ_type: "",
+    organ_type: "KIDNEY",
     donor_id: "",
     blood_group: "",
-    status: "AVAILABLE",
-    expiry_time: "",
+    condition: "GOOD",
   });
 
-  // Load organs
   const loadOrgans = async () => {
     try {
       const res = await axiosClient.get("/organs");
       setOrgans(res.data);
       setFiltered(res.data);
     } catch (err) {
-      console.error("Organ fetch error:", err);
+      toast.error("Failed to fetch organs");
     } finally {
       setLoading(false);
     }
@@ -36,7 +33,6 @@ export default function Organs() {
     loadOrgans();
   }, []);
 
-  // Search filtering
   useEffect(() => {
     const result = organs.filter((o) =>
       o.organ_type.toLowerCase().includes(search.toLowerCase())
@@ -44,104 +40,92 @@ export default function Organs() {
     setFiltered(result);
   }, [search, organs]);
 
-  // Delete organ
+  const saveOrgan = async () => {
+    if(!organData.donor_id || !organData.blood_group) return toast.error("Please fill all fields");
+    try {
+      const res = await axiosClient.post("/organs", organData);
+      setOrgans([res.data, ...organs]); // Ideally re-fetch or construct object
+      setShowModal(false);
+      toast.success("Organ Registered!");
+      loadOrgans();
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error saving organ");
+    }
+  };
+
+  // FIXED: Update Status Function
+  const updateStatus = async (id, status) => {
+    try {
+      // Corrected Route: PUT /organs/:id
+      await axiosClient.put(`/organs/${id}`, { status });
+      setOrgans(organs.map((o) => o.id === id ? { ...o, status } : o));
+      toast.success("Status Updated");
+    } catch (err) {
+      toast.error("Update failed");
+    }
+  };
+
   const deleteOrgan = async (id) => {
     if (!window.confirm("Delete this organ?")) return;
-
     try {
       await axiosClient.delete(`/organs/${id}`);
       setOrgans(organs.filter((o) => o.id !== id));
+      toast.success("Organ Deleted");
     } catch (err) {
-      console.error("Delete error:", err);
-    }
-  };
-
-  // Add Organ
-  const saveOrgan = async () => {
-    try {
-      const res = await axiosClient.post("/organs", organData);
-      setOrgans([...organs, { id: res.data.id, ...organData }]);
-      setShowModal(false);
-
-      setOrganData({
-        organ_type: "",
-        donor_id: "",
-        blood_group: "",
-        status: "AVAILABLE",
-        expiry_time: "",
-      });
-    } catch (err) {
-      console.error("Error saving organ:", err);
-    }
-  };
-
-  // Update Organ Status
-  const updateStatus = async (id, status) => {
-    try {
-      await axiosClient.put(`/organs/${id}/status`, { status });
-      setOrgans(
-        organs.map((o) =>
-          o.id === id ? { ...o, status } : o
-        )
-      );
-    } catch (err) {
-      console.error("Status update error:", err);
+      toast.error("Delete failed");
     }
   };
 
   const columns = [
+    { label: "ID", key: "id" },
     { label: "Organ", key: "organ_type" },
-    { label: "Donor ID", key: "donor_id" },
-    { label: "Blood Group", key: "blood_group" },
-    { label: "Status", key: "status" },
-    { label: "Expiry Time", key: "expiry_time" },
+    { label: "Blood", key: "blood_group" },
+    { label: "Donor", key: "donor_name" }, // Requires backend join
+    { label: "Expiry", key: "expiry_time" },
   ];
 
-  if (loading) return <p>Loading organs...</p>;
+  if (loading) return <div className="p-10 text-center">Loading...</div>;
 
   return (
     <div>
-      <h1 className="text-2xl font-bold mb-6">Organs</h1>
+      <h1 className="text-2xl font-bold mb-6 text-gray-800">Organ Management</h1>
 
-      {/* Search + Add Button */}
-      <div className="flex justify-between mb-4">
+      <div className="flex justify-between mb-6">
         <input
           type="text"
           placeholder="Search organ type..."
-          className="border p-2 rounded w-60"
+          className="border border-gray-300 p-2 rounded-lg w-64 focus:ring-2 focus:ring-purple-500 outline-none"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
-
         <button
-          className="bg-purple-600 text-white px-4 py-2 rounded"
+          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-medium transition"
           onClick={() => setShowModal(true)}
         >
           + Add Organ
         </button>
       </div>
 
-      {/* Organ Table */}
       <DataTable
         columns={columns}
         data={filtered}
         actions={(row) => (
-          <div className="flex gap-2">
-            {/* Update Status Dropdown */}
+          <div className="flex items-center gap-2">
             <select
-              className="border p-1 rounded"
+              className={`text-sm border rounded p-1 ${
+                row.status === 'AVAILABLE' ? 'bg-green-50 text-green-700 border-green-200' : 
+                row.status === 'ALLOCATED' ? 'bg-blue-50 text-blue-700 border-blue-200' : 'bg-gray-50'
+              }`}
               value={row.status}
               onChange={(e) => updateStatus(row.id, e.target.value)}
             >
               <option value="AVAILABLE">AVAILABLE</option>
-              <option value="MATCHED">MATCHED</option>
-              <option value="TRANSPLANTED">TRANSPLANTED</option>
+              <option value="ALLOCATED">ALLOCATED</option>
               <option value="EXPIRED">EXPIRED</option>
             </select>
 
-            {/* Delete Button */}
             <button
-              className="px-3 py-1 bg-red-500 text-white rounded"
+              className="px-3 py-1 bg-red-50 text-red-600 border border-red-200 rounded hover:bg-red-100 text-sm"
               onClick={() => deleteOrgan(row.id)}
             >
               Delete
@@ -150,44 +134,51 @@ export default function Organs() {
         )}
       />
 
-      {/* Add Organ Modal */}
+      {/* MODAL */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-xl shadow-lg w-[400px]">
-            <h2 className="text-xl font-semibold mb-4">Add Organ</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-xl shadow-2xl w-96">
+            <h2 className="text-xl font-bold mb-4">Register New Organ</h2>
+            
+            <div className="space-y-3">
+              <select 
+                className="w-full border p-2 rounded"
+                value={organData.organ_type}
+                onChange={e => setOrganData({...organData, organ_type: e.target.value})}
+              >
+                <option value="KIDNEY">Kidney</option>
+                <option value="LIVER">Liver</option>
+                <option value="HEART">Heart</option>
+                <option value="LUNGS">Lungs</option>
+              </select>
 
-            {[
-              { label: "Organ Type", key: "organ_type" },
-              { label: "Donor ID", key: "donor_id" },
-              { label: "Blood Group", key: "blood_group" },
-              { label: "Expiry Time (YYYY-MM-DD HH:MM:SS)", key: "expiry_time" },
-            ].map((field) => (
-              <input
-                key={field.key}
-                type="text"
-                placeholder={field.label}
-                className="border p-2 w-full mb-3 rounded"
-                value={organData[field.key]}
-                onChange={(e) =>
-                  setOrganData({ ...organData, [field.key]: e.target.value })
-                }
+              <input 
+                placeholder="Donor ID" 
+                className="w-full border p-2 rounded"
+                value={organData.donor_id}
+                onChange={e => setOrganData({...organData, donor_id: e.target.value})}
               />
-            ))}
 
-            {/* Buttons */}
-            <div className="flex justify-end gap-3 mt-4">
-              <button
-                className="px-4 py-2 bg-gray-400 text-white rounded"
+              <input 
+                placeholder="Blood Group (e.g. A+)" 
+                className="w-full border p-2 rounded uppercase"
+                value={organData.blood_group}
+                onChange={e => setOrganData({...organData, blood_group: e.target.value})}
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button 
                 onClick={() => setShowModal(false)}
+                className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
               >
                 Cancel
               </button>
-
-              <button
-                className="px-4 py-2 bg-purple-600 text-white rounded"
+              <button 
                 onClick={saveOrgan}
+                className="px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700"
               >
-                Save
+                Save Organ
               </button>
             </div>
           </div>

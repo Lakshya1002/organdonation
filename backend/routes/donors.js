@@ -3,7 +3,15 @@ const router = express.Router();
 const db = require('../db/db');
 
 // Get all donors
-
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT * FROM Donors ORDER BY registered_at DESC');
+    res.json(rows);
+  } catch (err) {
+    console.error('GET donors error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // Register a new donor
 router.post('/', async (req, res) => {

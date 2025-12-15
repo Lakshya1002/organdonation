@@ -37,7 +37,13 @@ router.post(
         return res.json({ message: "No expired organs found." });
 
       // Update status
-     
+      const [updateRes] = await db.query(
+        `UPDATE Organs 
+         SET status = 'EXPIRED' 
+         WHERE expiry_time < NOW() 
+         AND status = 'AVAILABLE'`
+      );
+
       // Log
       await db.query(
         `INSERT INTO Logs (user_id, action, entity_type, message)

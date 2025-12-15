@@ -1,118 +1,232 @@
-import React from "react";
-import { NavLink } from "react-router-dom";
+import React, { useState } from "react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import useAuthStore from "../store/authStore";
-import { 
-  FiHome, 
-  FiUsers, 
-  FiDatabase, 
-  FiActivity, 
-  FiHeart, 
+import {
+  FiHome,
+  FiUsers,
+  FiDatabase,
+  FiActivity,
+  FiHeart,
   FiSettings,
-  FiLifeBuoy
+  FiLifeBuoy,
+  FiLogOut,
+  FiChevronLeft,
+  FiChevronRight
 } from "react-icons/fi";
 
-export default function Sidebar() {
-  const { role } = useAuthStore();
+/* ---------------- CONFIG ---------------- */
+const NAV_SECTIONS = [
+  {
+    category: "Main",
+    roles: ["admin"],
+    items: [
+      { to: "/admin/dashboard", icon: FiHome, label: "Dashboard" },
+      { to: "/admin/donors", icon: FiHeart, label: "Donor Registry" },
+      { to: "/admin/recipients", icon: FiUsers, label: "Recipients List" },
+      { to: "/admin/organs", icon: FiDatabase, label: "Organ Bank" },
+    ]
+  },
+  {
+    category: "Clinical",
+    roles: ["admin", "doctor", "coordinator"],
+    items: [
+      { to: "/matching", icon: FiActivity, label: "AI Matching" },
+      { to: "/doctor/dashboard", icon: FiHome, label: "My Dashboard", roles: ["doctor"] },
+      { to: "/coordinator/dashboard", icon: FiHome, label: "Coordinator View", roles: ["coordinator"] },
+    ]
+  },
+  {
+    category: "System",
+    roles: ["admin", "doctor", "coordinator", "user"],
+    items: [
+      { to: "/settings", icon: FiSettings, label: "Settings" },
+      { to: "/support", icon: FiLifeBuoy, label: "Support" },
+    ]
+  }
+];
 
-  // Styles for the links
-  const baseClass = "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 font-medium text-sm mb-1";
-  
-  // Active: Blue background, white text, subtle shadow
-  const activeClass = `${baseClass} bg-blue-600 text-white shadow-md shadow-blue-200`;
-  
-  // Inactive: Gray text, hover effect
-  const inactiveClass = `${baseClass} text-slate-500 hover:bg-blue-50 hover:text-blue-700`;
+export default function Sidebar() {
+  const { role, user, logout } = useAuthStore();
+  const navigate = useNavigate();
+  const [isCollapsed, setIsCollapsed] = useState(false);
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
 
   return (
-    <aside className="w-72 bg-white border-r border-slate-200 flex flex-col h-full shrink-0 z-20">
-      
-      {/* 1. BRAND HEADER */}
-      <div className="h-20 flex items-center px-8 border-b border-slate-100">
-        <div className="flex items-center gap-2 text-blue-600">
-          <div className="bg-blue-600 text-white p-1.5 rounded-lg">
-            <FiActivity className="text-xl" />
+    <aside
+      className={`
+        relative flex flex-col h-screen shrink-0
+        bg-gradient-to-b from-white/85 via-white/75 to-white/70
+        backdrop-blur-xl
+        border-r border-slate-200/70
+        transition-all duration-300
+        ${isCollapsed ? "w-20" : "w-72"}
+      `}
+    >
+      {/* SYSTEM ACCENT — VERTICAL */}
+      <div className="absolute top-0 right-0 h-full w-[2px] bg-gradient-to-b from-blue-500/50 via-cyan-400/40 to-transparent pointer-events-none z-20" />
+
+      {/* COLLAPSE TOGGLE */}
+      <button
+        onClick={() => setIsCollapsed(!isCollapsed)}
+        className="
+          absolute -right-3 top-8 z-30
+          w-6 h-6 rounded-full
+          bg-white border border-slate-200
+          shadow-md
+          flex items-center justify-center
+          text-slate-400 hover:text-blue-600
+          transition
+        "
+      >
+        {isCollapsed ? <FiChevronRight size={14} /> : <FiChevronLeft size={14} />}
+      </button>
+
+      {/* HEADER */}
+      <div
+        className={`h-20 flex items-center border-b border-slate-200/60 ${
+          isCollapsed ? "justify-center" : "px-6"
+        }`}
+      >
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg">
+            <div className="h-4 w-4 bg-white rounded-full" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-slate-800">Organova</span>
+
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, x: -6 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="overflow-hidden"
+            >
+              <h1 className="text-lg font-bold text-slate-800">Organova</h1>
+              <p className="text-[10px] uppercase tracking-widest text-slate-400">
+                {role}
+              </p>
+            </motion.div>
+          )}
         </div>
       </div>
 
-      {/* 2. NAVIGATION LINKS */}
-      <nav className="flex-1 px-4 py-6 overflow-y-auto custom-scrollbar">
-        
-        {/* ADMIN SECTION */}
-        {role === "admin" && (
-          <div className="mb-8">
-            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Administration</p>
-            
-            <NavLink to="/admin/dashboard" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-              <FiHome className="text-lg" /> Dashboard
-            </NavLink>
-            
-            <NavLink to="/admin/donors" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-              <FiHeart className="text-lg" /> Donor Registry
-            </NavLink>
-            
-            <NavLink to="/admin/recipients" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-              <FiUsers className="text-lg" /> Recipients List
-            </NavLink>
-            
-            <NavLink to="/admin/organs" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-              <FiDatabase className="text-lg" /> Organ Bank
-            </NavLink>
-          </div>
-        )}
+      {/* NAV */}
+      <nav className="flex-1 py-6 overflow-y-auto">
+        {NAV_SECTIONS.map((section, idx) => {
+          if (!section.roles.includes(role)) return null;
 
-        {/* CLINICAL SECTION */}
-        {(role === "admin" || role === "doctor" || role === "coordinator") && (
-          <div className="mb-8">
-            <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Clinical Ops</p>
-            
-            <NavLink to="/matching" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-              <FiActivity className="text-lg" /> AI Matching
-            </NavLink>
+          return (
+            <div key={idx} className="mb-8">
+              {!isCollapsed && (
+                <p className="px-6 mb-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                  {section.category}
+                </p>
+              )}
 
-            {role === "doctor" && (
-              <NavLink to="/doctor/dashboard" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-                <FiHome className="text-lg" /> My Dashboard
-              </NavLink>
-            )}
-
-             {role === "coordinator" && (
-              <NavLink to="/coordinator/dashboard" className={({ isActive }) => (isActive ? activeClass : inactiveClass)}>
-                <FiHome className="text-lg" /> Coordinator View
-              </NavLink>
-            )}
-          </div>
-        )}
-
-        {/* SETTINGS SECTION (Placeholder for now) */}
-        <div>
-           <p className="px-4 text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">System</p>
-           <button className={inactiveClass + " w-full"}>
-             <FiSettings className="text-lg" /> Settings
-           </button>
-           <button className={inactiveClass + " w-full"}>
-             <FiLifeBuoy className="text-lg" /> Support
-           </button>
-        </div>
-
+              <div className="px-3 space-y-1">
+                {section.items.map((item) => {
+                  if (item.roles && !item.roles.includes(role)) return null;
+                  return (
+                    <NavItem
+                      key={item.to}
+                      item={item}
+                      isCollapsed={isCollapsed}
+                    />
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
       </nav>
 
-      {/* 3. FOOTER STATUS */}
-      <div className="p-4 border-t border-slate-100 bg-slate-50/50">
-        <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <div className="absolute top-0 left-0 w-3 h-3 bg-green-500 rounded-full opacity-50 animate-ping"></div>
-            </div>
-            <div>
-              <p className="text-xs font-bold text-slate-700">System Online</p>
-              <p className="text-[10px] text-slate-500">v2.4.0 • Stable</p>
-            </div>
+      {/* FOOTER */}
+      <div className="p-4 border-t border-slate-200/60 bg-white/60">
+        <div className={`flex items-center ${isCollapsed ? "flex-col gap-4" : "gap-3"}`}>
+          <div className="w-10 h-10 rounded-full bg-slate-200 border-2 border-white shadow-sm flex items-center justify-center text-slate-600 font-bold text-xs uppercase">
+            {user?.name ? user.name.slice(0, 2) : "MD"}
           </div>
+
+          {!isCollapsed && (
+            <div className="flex-1 overflow-hidden">
+              <p className="text-sm font-bold text-slate-700 truncate">
+                {user?.name || "Medical Staff"}
+              </p>
+              <p className="text-xs text-slate-500 capitalize">{role}</p>
+            </div>
+          )}
+
+          <button
+            onClick={handleLogout}
+            title="Logout"
+            className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+          >
+            <FiLogOut size={18} />
+          </button>
         </div>
       </div>
     </aside>
+  );
+}
+
+/* ---------------- NAV ITEM ---------------- */
+function NavItem({ item, isCollapsed }) {
+  return (
+    <NavLink
+      to={item.to}
+      title={isCollapsed ? item.label : ""}
+      className={({ isActive }) => `
+        relative group flex items-center gap-3 px-3 py-2.5 rounded-xl
+        font-medium text-sm transition-all duration-300 ease-out
+        ${isCollapsed ? "justify-center" : ""}
+        ${isActive ? "text-blue-700" : "text-slate-500 hover:text-slate-900"}
+      `}
+    >
+      {({ isActive }) => (
+        <>
+          {/* Active Indicator */}
+          {isActive && !isCollapsed && (
+            <span className="absolute left-0 top-1/2 -translate-y-1/2 h-6 w-[3px] rounded-full bg-gradient-to-b from-blue-500 to-cyan-400" />
+          )}
+
+          <span
+            className={`
+              relative z-10 flex items-center justify-center
+              ${
+                isCollapsed && isActive
+                  ? "w-10 h-10 rounded-xl bg-blue-500/15 shadow-inner"
+                  : ""
+              }
+            `}
+          >
+            <item.icon
+              className={`text-lg transition-colors ${
+                isActive
+                  ? "text-blue-600"
+                  : "text-slate-400 group-hover:text-slate-700"
+              }`}
+            />
+          </span>
+
+          {!isCollapsed && (
+            <span className="relative z-10 truncate group-hover:translate-x-0.5 transition-transform">
+              {item.label}
+            </span>
+          )}
+
+          {/* Hover Glow */}
+          <span
+            className={`
+              absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition
+              ${isActive
+                ? "bg-gradient-to-r from-blue-500/10 to-cyan-500/10"
+                : "bg-white/70"}
+            `}
+          />
+        </>
+      )}
+    </NavLink>
   );
 }

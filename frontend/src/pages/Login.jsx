@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import useAuthStore from "../store/authStore";
-import { FiLock, FiMail, FiArrowRight } from "react-icons/fi";
+import { motion, AnimatePresence } from "framer-motion"; // Animation library
+import { FiMail, FiLock, FiEye, FiEyeOff, FiCheckCircle, FiAlertCircle } from "react-icons/fi";
+import { FaSpinner } from "react-icons/fa";
+import useAuthStore from "../store/authStore"; 
 
 export default function Login() {
   const navigate = useNavigate();
@@ -9,6 +11,8 @@ export default function Login() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isFocused, setIsFocused] = useState(null); // To track which input is focused
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -16,140 +20,203 @@ export default function Login() {
     if (!res.success) return;
 
     const role = useAuthStore.getState().role;
-    if (role === "admin") navigate("/admin/dashboard");
-    else if (role === "coordinator") navigate("/coordinator/dashboard");
-    else if (role === "doctor") navigate("/doctor/dashboard");
-    else navigate("/");
+    // Simulate a slight delay for smooth exit animation (optional)
+    setTimeout(() => {
+      if (role === "admin") navigate("/admin/dashboard");
+      else if (role === "coordinator") navigate("/coordinator/dashboard");
+      else if (role === "doctor") navigate("/doctor/dashboard");
+      else navigate("/");
+    }, 500);
   };
 
   return (
-    <div className="min-h-screen flex bg-slate-50 font-sans">
-      
-      {/* Left Side - Hero Visual */}
-      <div className="hidden lg:flex lg:w-1/2 relative bg-blue-900 overflow-hidden items-center justify-center">
-        {/* Background Image with Fallback */}
-        <div className="absolute inset-0 z-0">
-          <img 
-            src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80" 
-            alt="Medical Team" 
-            className="w-full h-full object-cover opacity-40 mix-blend-overlay"
-          />
-          <div className="absolute inset-0 bg-gradient-to-br from-blue-900/90 to-blue-800/90 mix-blend-multiply"></div>
+  <div className="min-h-screen flex items-center justify-center bg-slate-50 relative overflow-hidden">
+
+    {/* BACKGROUND BLOBS — REFINED */}
+    <div className="absolute inset-0 z-0 pointer-events-none">
+      <div className="absolute -top-32 -left-32 w-[520px] h-[520px] bg-blue-200/60 rounded-full blur-[140px] animate-blob" />
+      <div className="absolute top-[-20%] right-[-10%] w-[520px] h-[520px] bg-cyan-200/60 rounded-full blur-[140px] animate-blob animation-delay-2000" />
+      <div className="absolute bottom-[-25%] left-[25%] w-[520px] h-[520px] bg-indigo-200/60 rounded-full blur-[160px] animate-blob animation-delay-4000" />
+    </div>
+
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.65, ease: "easeOut" }}
+      className="relative z-10 w-full max-w-6xl bg-white/85 backdrop-blur-2xl rounded-3xl shadow-[0_40px_120px_rgba(0,0,0,0.25)] border border-white/60 overflow-hidden grid grid-cols-1 lg:grid-cols-5"
+    >
+
+      {/* LEFT — BRANDING (POLISHED, SAME SOUL) */}
+      <div className="hidden lg:flex lg:col-span-2 flex-col justify-between bg-slate-900 text-white p-12 relative overflow-hidden">
+
+        {/* Grid texture — softer */}
+        <div
+          className="absolute inset-0 opacity-[0.06]"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 1px 1px, white 1px, transparent 0)",
+            backgroundSize: "28px 28px",
+          }}
+        />
+
+        <div className="relative z-10">
+          <motion.div
+            initial={{ x: -16, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex items-center gap-3 mb-10"
+          >
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center shadow-lg">
+              <div className="h-4 w-4 bg-white rounded-full" />
+            </div>
+            <span className="text-xl font-bold tracking-wide">ORGANOVA</span>
+          </motion.div>
+
+          <motion.h1
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+            className="text-4xl font-extrabold leading-tight"
+          >
+            Ethical.<br />
+            Transparent.<br />
+            <span className="bg-gradient-to-r from-blue-400 via-cyan-300 to-indigo-400 bg-clip-text text-transparent">
+              Life-Saving.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.55 }}
+            className="mt-7 text-slate-300 text-sm leading-relaxed"
+          >
+            Secure access to Organova’s organ allocation platform.
+            Every action is immutable, audited, and ethically governed.
+          </motion.p>
         </div>
-        
-        {/* Content Overlay */}
-        <div className="relative z-10 px-16 text-white max-w-2xl">
-          <div className="inline-block px-3 py-1 mb-6 text-xs font-bold tracking-widest text-blue-200 uppercase border border-blue-400 rounded-full bg-blue-900/30 backdrop-blur-sm">
-            Secure Medical Portal
+
+        <motion.div
+          initial={{ y: 16, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.7 }}
+          className="relative z-10 bg-white/10 backdrop-blur-sm p-4 rounded-xl border border-white/10"
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <FiCheckCircle className="text-green-400" />
+            <span className="text-xs font-semibold uppercase tracking-wider text-green-400">
+              System Secure
+            </span>
           </div>
-          <h1 className="text-5xl font-extrabold mb-6 leading-tight tracking-tight text-white drop-shadow-sm">
-            Advanced Organ <br/> <span className="text-blue-300">Matching System</span>
-          </h1>
-          <p className="text-blue-100 text-lg leading-relaxed mb-10 opacity-90">
-            Organova leverages cutting-edge AI to streamline the donation process, 
-            ensuring organs reach those in need with unprecedented speed and fairness.
+          <p className="text-xs text-slate-300">
+            Encrypted connection • Audit-compliant
           </p>
-
-          <div className="grid grid-cols-2 gap-8 border-t border-blue-400/30 pt-8">
-            <div>
-              <p className="text-4xl font-bold text-white">2.4k+</p>
-              <p className="text-blue-300 text-sm font-medium uppercase tracking-wide mt-1">Lives Saved</p>
-            </div>
-            <div>
-              <p className="text-4xl font-bold text-white">98%</p>
-              <p className="text-blue-300 text-sm font-medium uppercase tracking-wide mt-1">Match Accuracy</p>
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative Blobs */}
-        <div className="absolute -bottom-32 -left-32 w-96 h-96 bg-blue-500 rounded-full mix-blend-screen filter blur-3xl opacity-20 animate-pulse"></div>
-        <div className="absolute -top-32 -right-32 w-96 h-96 bg-purple-500 rounded-full mix-blend-screen filter blur-3xl opacity-20"></div>
+        </motion.div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="w-full max-w-md space-y-8">
-          
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Welcome Back</h2>
-            <p className="mt-2 text-slate-500">Please enter your credentials to access the dashboard.</p>
-          </div>
+      {/* RIGHT — FORM (REFINED, NOT SIMPLIFIED) */}
+      <div className="lg:col-span-3 p-8 md:p-12 flex items-center justify-center bg-white/60">
+        <div className="w-full max-w-md">
 
-          {error && (
-            <div className="p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm rounded-r shadow-sm flex items-start animate-fade-in">
-              <svg className="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>
-              <span>{error}</span>
-            </div>
-          )}
-
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-1">
-              <label className="block text-sm font-semibold text-slate-700">Email Address</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <FiMail className="text-lg"/>
-                </div>
-                <input
-                  type="email"
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out shadow-sm"
-                  placeholder="doctor@hospital.org"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-1">
-              <div className="flex items-center justify-between">
-                <label className="block text-sm font-semibold text-slate-700">Password</label>
-                <a href="#" className="text-sm font-medium text-blue-600 hover:text-blue-500">Forgot password?</a>
-              </div>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-                  <FiLock className="text-lg"/>
-                </div>
-                <input
-                  type="password"
-                  className="block w-full pl-10 pr-3 py-3 border border-slate-300 rounded-lg leading-5 bg-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 sm:text-sm transition duration-150 ease-in-out shadow-sm"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full flex justify-center items-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:-translate-y-0.5"
-            >
-              {loading ? (
-                <>
-                  <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                  Authenticating...
-                </>
-              ) : (
-                <>
-                  Sign In <FiArrowRight className="ml-2 text-lg" />
-                </>
-              )}
-            </button>
-          </form>
-
-          <div className="mt-6 text-center border-t border-slate-100 pt-6">
-            <p className="text-xs text-slate-400">
-              Authorized personnel only. Access is monitored and logged. <br/>
-              © 2024 Organova Inc. v2.4.0
+          <div className="mb-8">
+            <h2 className="text-3xl font-bold text-slate-800">
+              Welcome Back
+            </h2>
+            <p className="text-slate-500 mt-2">
+              Sign in to continue to your dashboard
             </p>
           </div>
+
+          <AnimatePresence>
+            {error && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: "auto", opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="overflow-hidden"
+              >
+                <div
+                  role="alert"
+                  aria-live="assertive"
+                  className="mb-6 flex items-center gap-3 rounded-xl border border-red-200 bg-red-50/80 px-4 py-3 text-sm text-red-700 backdrop-blur-sm"
+                >
+                  <FiAlertCircle className="text-lg shrink-0" />
+                  <span>{error}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <form onSubmit={handleLogin} className="space-y-6">
+
+            {/* EMAIL */}
+            <div>
+              <label className="block text-sm font-semibold text-slate-700 ml-1">
+                Email Address
+              </label>
+              <div className="relative mt-1 group">
+                <FiMail className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-700 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm"
+                  placeholder="name@hospital.org"
+                />
+              </div>
+            </div>
+
+            {/* PASSWORD */}
+            <div>
+              <div className="flex justify-between items-center ml-1">
+                <label className="text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <a className="text-xs font-semibold text-blue-600 hover:text-blue-700 cursor-pointer">
+                  Forgot Password?
+                </a>
+              </div>
+              <div className="relative mt-1 group">
+                <FiLock className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-600 transition-colors" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full bg-white border border-slate-200 rounded-xl py-3 pl-10 pr-10 text-slate-700 placeholder-slate-400 outline-none transition-all focus:border-blue-500 focus:ring-4 focus:ring-blue-500/10 shadow-sm"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition"
+                >
+                  {showPassword ? <FiEyeOff /> : <FiEye />}
+                </button>
+              </div>
+            </div>
+
+            {/* SUBMIT */}
+            <motion.button
+              whileHover={{ scale: 1.025 }}
+              whileTap={{ scale: 0.98 }}
+              disabled={loading}
+              className="w-full mt-4 bg-slate-900 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-slate-900/25 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-900/20 disabled:opacity-70 transition"
+            >
+              {loading ? <FaSpinner className="animate-spin mx-auto" /> : "Sign In"}
+            </motion.button>
+
+          </form>
+
+          <div className="mt-8 pt-6 border-t border-slate-200 text-center">
+            <p className="text-xs text-slate-400">
+              All access attempts are logged and monitored
+            </p>
+          </div>
+
         </div>
       </div>
-    </div>
-  );
+    </motion.div>
+  </div>
+);
+
 }

@@ -1,103 +1,148 @@
-import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { FiBell, FiChevronDown, FiLogOut } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
 import useAuthStore from "../store/authStore";
-import { useNavigate } from "react-router-dom";
-import { FiLogOut, FiBell, FiSearch, FiCalendar, FiUser, FiMenu } from "react-icons/fi";
+import { useState, useRef, useEffect } from "react";
 
 export default function Topbar() {
   const { user, role, logout } = useAuthStore();
-  const navigate = useNavigate();
+  const location = useLocation();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
 
-  const handleLogout = () => {
-    if(window.confirm("Are you sure you want to logout?")) {
-      logout();
-      navigate("/login");
-    }
-  };
+  const pageTitle = location.pathname
+    .split("/")
+    .pop()
+    ?.replace("-", " ")
+    ?.toUpperCase();
 
-  // Format today's date
-  const today = new Date().toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  /* CLICK OUTSIDE TO CLOSE (POLISH DETAIL) */
+  useEffect(() => {
+    const handler = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   return (
-    <header className="bg-white sticky top-0 z-30 border-b border-slate-200 shadow-sm px-6 py-3 flex justify-between items-center transition-all">
-      
-      {/* LEFT: Context & Date */}
-      <div className="flex items-center gap-4">
-        {/* Mobile Menu Trigger (Visual Only for now) */}
-        <button className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg">
-           <FiMenu className="text-xl" />
+    <header
+      className="
+        relative h-20 px-8 flex items-center justify-between
+        bg-gradient-to-r from-white/85 via-white/80 to-white/75
+        backdrop-blur-xl
+        border-b border-slate-200/70
+        shadow-[0_6px_24px_rgba(0,0,0,0.06)]
+        sticky top-0 z-40
+      "
+    >
+      {/* LEFT — PAGE CONTEXT */}
+      <div>
+        <motion.h1
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="text-lg font-bold text-slate-800 tracking-wide"
+        >
+          {pageTitle || "DASHBOARD"}
+        </motion.h1>
+        <p className="text-[11px] text-slate-400 uppercase tracking-widest">
+          {role} portal
+        </p>
+      </div>
+
+      {/* RIGHT — ACTIONS */}
+      <div className="flex items-center gap-6">
+
+        {/* NOTIFICATIONS */}
+        <button
+          className="
+            relative text-slate-500 hover:text-slate-700
+            transition duration-300
+          "
+          aria-label="Notifications"
+        >
+          <FiBell size={20} />
+          <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
         </button>
 
-        <div className="flex flex-col">
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight leading-tight">
-            {role === 'admin' ? 'Admin Console' : role === 'doctor' ? 'Clinical Dashboard' : 'Overview'}
-          </h2>
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-            <FiCalendar className="text-blue-500" />
-            <span>{today}</span>
-          </div>
-        </div>
-      </div>
-
-      {/* RIGHT: Global Actions & User Profile */}
-      <div className="flex items-center gap-3 sm:gap-6">
-
-        {/* Global Search - Hidden on small mobile */}
-        <div className="hidden md:flex items-center bg-slate-50 rounded-lg px-3 py-2 w-64 border border-slate-200 focus-within:border-blue-500 focus-within:ring-1 focus-within:ring-blue-500 transition-all">
-          <FiSearch className="text-slate-400 mr-2 text-lg" />
-          <input 
-            type="text" 
-            placeholder="Search records..." 
-            className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder:text-slate-400"
-          />
-        </div>
-
-        {/* Action Icons */}
-        <div className="flex items-center gap-2 border-r border-slate-200 pr-4 mr-2 h-8">
-          <button className="relative p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all">
-            <FiBell className="text-lg" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 border border-white rounded-full"></span>
-          </button>
-        </div>
-
-        {/* User Profile Dropdown Area */}
-        <div className="flex items-center gap-3 group cursor-pointer">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-slate-700 leading-none mb-1">{user?.name || user?.email?.split('@')[0]}</p>
-            <span className={`text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded border ${
-              role === 'admin' ? 'bg-purple-50 text-purple-600 border-purple-100' : 
-              role === 'doctor' ? 'bg-green-50 text-green-600 border-green-100' : 
-              'bg-blue-50 text-blue-600 border-blue-100'
-            }`}>
-              {role}
-            </span>
-          </div>
-          
-          <div className="relative">
-            <div className="h-9 w-9 bg-slate-800 rounded-full flex items-center justify-center text-white shadow-md ring-2 ring-white overflow-hidden">
-               {user?.avatar ? (
-                 <img src={user.avatar} alt="User" className="h-full w-full object-cover" />
-               ) : (
-                 <FiUser className="text-sm" />
-               )}
-            </div>
-            <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></div>
-          </div>
-
+        {/* USER MENU */}
+        <div className="relative" ref={menuRef}>
           <button
-            onClick={handleLogout}
-            className="ml-1 p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-full transition-all opacity-0 group-hover:opacity-100"
-            title="Logout"
+            onClick={() => setOpen((v) => !v)}
+            className="
+              flex items-center gap-3
+              bg-white/70 hover:bg-white/90
+              px-3 py-2 rounded-xl
+              border border-white/60
+              transition duration-300
+            "
+            aria-haspopup="menu"
+            aria-expanded={open}
           >
-            <FiLogOut className="text-lg" />
-          </button>
-        </div>
+            {/* AVATAR */}
+            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 text-white flex items-center justify-center font-bold text-xs uppercase shadow-sm">
+              {user?.name ? user.name.slice(0, 2) : "MD"}
+            </div>
 
+            {/* NAME + ROLE */}
+            <div className="hidden md:block text-left">
+              <p className="text-sm font-semibold text-slate-700 truncate max-w-[120px]">
+                {user?.name || "Medical Staff"}
+              </p>
+              <p className="text-xs text-slate-400 capitalize">
+                {role}
+              </p>
+            </div>
+
+            {/* CHEVRON */}
+            <FiChevronDown
+              className={`
+                text-slate-400 transition-transform duration-300
+                ${open ? "rotate-180" : ""}
+              `}
+            />
+          </button>
+
+          {/* DROPDOWN */}
+          <AnimatePresence>
+            {open && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 6 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="
+                  absolute right-0 mt-3 w-48
+                  bg-white/95 backdrop-blur-xl
+                  border border-white/60
+                  rounded-xl shadow-xl
+                  overflow-hidden
+                "
+              >
+                <button
+                  onClick={logout}
+                  className="
+                    w-full flex items-center gap-3
+                    px-4 py-3 text-sm
+                    text-slate-600 hover:text-red-600
+                    hover:bg-red-50
+                    transition duration-300
+                  "
+                >
+                  <FiLogOut />
+                  Logout
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       </div>
+
+      {/* SYSTEM ACCENT — HORIZONTAL (MATCHES SIDEBAR EXACTLY) */}
+      <div className="absolute bottom-0 left-0 h-[2px] w-full bg-gradient-to-r from-blue-500/50 via-cyan-400/40 to-transparent pointer-events-none z-20" />
     </header>
   );
 }
